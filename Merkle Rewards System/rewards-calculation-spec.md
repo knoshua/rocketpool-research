@@ -5,19 +5,20 @@ This document serves as a formal specification for the way that the rewards inte
 
 ## Version
 
-This describes **v11** of the rewards calculation ruleset.
+This describes **v10** of the rewards calculation ruleset.
 
 This version implements RPIP-[to be assigned]
 
 
 ### Changes since `v8`
 
-The following updates have been made from [v8](./legacy/rewards-calculation-spec-v8.md) of the spec. Note that v9 was just a file spec change, not a ruleset change, and is thus not included in this comparison and that v10 was withdrawn.
+The following updates have been made from [v8](./legacy/rewards-calculation-spec-v8.md) of the spec. Note that v9 was just a file spec change, not a ruleset change, and is thus not included in this comparison.
 
 
 #### Major Updates
 
--
+-  For minipools with less than 14% commission, increase the share of execution layer rewards based on RPL stake
+-  [TODO] For minipools with less than 14% commission, introduce a bonus based on RPL stake and the consensus rewards they earned
 
 
 #### Minor Changes
@@ -614,11 +615,16 @@ When a successful attestation is found, calculate the `minipoolScore` awarded to
         fee = previousFee
     }
     ```
-3. Calculate the `minipoolScore` using the minipool's bond amount and node fee:
+3. Get the parent's node `percentOfBorrowedETH` (see the  [getNodeWeight section](#getnodeweight)) and adjust the fee:
+    ```go
+    fee = max(fee, 7.5e16 + 6.5e15 * min(10e18, percentOfBorrowedETH))
+    ```
+    [TODO] check units
+4. Calculate the `minipoolScore` using the minipool's bond amount and node fee:
     ```go
     minipoolScore := (1e18 - fee) * bond / 32e18 + fee // The "ideal" fractional amount of ETH awarded to the NO for this attestation, out of 1
     ```
-4. Add `minipoolScore` to the minipool's running total, and the cumulative total for all minipools:
+5. Add `minipoolScore` to the minipool's running total, and the cumulative total for all minipools:
     ```go
     minipoolScores[minipool.Address] += minipoolScore
     totalMinipoolScore += minipoolScore
@@ -632,6 +638,11 @@ These minipools are considered idle and will just waste calculations in the fina
 
 While skipping this step won't affect the final calculation, if you are logging the records of your calculation (such as with the "minipool performance" file included in the canonical Rocket Pool rewards intervals) then idle minipools may be omitted from the final report. 
 
+### Calculating Consensus Reward Bonus [TODO]
+```go
+nodeBonus :=
+totalConsensusBonus := 
+```
 
 ### Calculating Node Rewards
 
@@ -649,11 +660,13 @@ minipoolEth := totalNodeOpShare * minipoolScores[minipool.Address] / totalMinipo
 nodeEth[minipool.OwningNode] += minipoolEth
 totalEthForMinipools += minipoolEth
 ```
-where `nodeEth` is the true amount of ETH awarded to each node.
 
-Now, calculate the final "actual" pool staker balance (which will act as a buffer and capture any lost minipool ETH due to integer division):
+### Final Results [WIP]
+- If totalConsensusBonus > smoothingPoolBalance - totalEthForMinipools adjust nodeBonus by a factor of (smoothingPoolBalance - totalEthForMinipools) / totalConsensusBonus
+- add nodeBonus to nodeETH to get the true amount of ETH awared to each node
+- calculate the final "actual" pool staker balance (which will act as a buffer and capture any lost minipool ETH due to integer division):
 ```go
-poolStakerEth := smoothingPoolBalance - totalEthForMinipools
+poolStakerEth := smoothingPoolBalance - totalEthForMinipools - totalConsensusBonus
 ```
 
 
