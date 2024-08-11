@@ -5,33 +5,28 @@ This document serves as a formal specification for the way that the rewards inte
 
 ## Version
 
-This describes **v8** of the rewards calculation ruleset.
+This describes **v11** of the rewards calculation ruleset.
 
-This version implements RPIP-30 following the suggestions [here](./misc/patches-rpip-30-suggestions.md)
+This version implements RPIP-[to be assigned]
 
 
-### Changes since `v7`
+### Changes since `v8`
 
-The following updates have been made from [v7](./legacy/rewards-calculation-spec-v7.md) of the spec.
+The following updates have been made from [v8](./legacy/rewards-calculation-spec-v8.md) of the spec. Note that v9 was just a file spec change, not a ruleset change, and is thus not included in this comparison and that v10 was withdrawn.
 
 
 #### Major Updates
 
-- Following the Protocol DAO vote to approve RPIP-30, [Collateral Rewards](#collateral-rewards) rewards are now weighted on a curve, favoring 8 Ether Minipools and creating diminishing returns as additional RPL above the minimum is staked.
-  - This change is phased in linearly over 5 intervals, starting with interval 18, and will be fully effective in interval 23.
-- There is no longer a maximum node collateral.
-  - RocketDAOProtocolSettingsNode.getMaximumPerMinipoolStake() is no longer called and a constant of 150% is used instead when calculating the phase-in for RPIP-30.
+-
 
 
 #### Minor Changes
 
-- The Rewards File now includes a `totalNodeWeight` field which represents the sum of the rewards weighting.
-
 
 #### Clarifications
 
-- Disclaimers / Notes section has been updated to specify multiplication precedes division to preserve accuracy.
-- Attestation eligibility surrounding the Deneb hard fork was clearly defined.
+- fixed a typo in Calculating Attestation Performance and Minipool Scores
+
 
 ---
 
@@ -575,7 +570,7 @@ statusTime := minipool.getStatusTime()
 
 For duties to be eligible for rewards inclusion, the minipool must be in the `staking` status at the time of the attestation duty assignment.
 You may use the state of the chain at the time of the duty assignment or any state after the duty assignment to assess this.
-This is used because `status` is one of the final states of a minipool (the other being `dissolved`, which is mutually exclusive with `staking`) and `statusTime` indicates the time at which the minipool entered `staking` status.
+This is used because `staking` is one of the final states of a minipool (the other being `dissolved`, which is mutually exclusive with `staking`) and `statusTime` indicates the time at which the minipool entered `staking` status.
 Thus, if a minipool's status is `staking`, it will always be `staking` and you can determine when it entered that state by using `statusTime`.
 
 *Note that the `finalized` flag is not a true state and does not overwrite `staking`; it is a separate boolean value.*
